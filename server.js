@@ -1,4 +1,4 @@
-// Roblox API Proxy Server - Version 2
+// Roblox API Proxy Server - Version 3
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -7,21 +7,38 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Security middleware
-app.use(helmet());
-app.use(cors({ 
-  origin: ['https://www.roblox.com', 'https://create.roblox.com'],
-  methods: ['GET', 'POST'],
-  credentials: true 
+// Security middleware - more permissive for bookmarklets
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP that blocks bookmarklets
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
+
+app.use(cors({ 
+  origin: function (origin, callback) {
+    // Allow requests with no origin (bookmarklets) or from Roblox domains
+    if (!origin || origin.includes('roblox.com')) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for now - you can restrict later
+    }
+  },
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: false // Changed to false for bookmarklets
+}));
+
 app.use(express.json());
 
-// Rate limit (60 requests/minute)
-app.use(rateLimit({ windowMs: 60_000, max: 60 }));
+// Rate limit (100 requests/minute - increased for testing)
+app.use(rateLimit({ windowMs: 60_000, max: 100 }));
 
 // Health check endpoint
 app.get('/', (req, res) => {
-  res.json({ status: 'Roblox Proxy Server Running', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'Roblox Proxy Server Running', 
+    timestamp: new Date().toISOString(),
+    version: '3.0'
+  });
 });
 
 // Proxy endpoint
