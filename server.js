@@ -1,10 +1,11 @@
+// Roblox API Proxy Server - Version 2
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Use cloud provider's port
+const PORT = process.env.PORT || 3000;
 
 // Security middleware
 app.use(helmet());
